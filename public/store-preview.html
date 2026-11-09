@@ -1,0 +1,54 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Store preview — PixelShop bot</title><link rel="stylesheet" href="/styles.css"></head><body>
+<div class="wrap" style="max-width:560px"><h2>🛒 Store preview — simulates the Telegram bot</h2><p class="muted small">No Telegram token needed. You are shopping as demo customer Ayesha Rahman (balance shown live). Orders here use the same API as the bot.</p>
+<div class="phone" id="phone"><p><b id="botName">PixelShop</b></p><div id="screen">Loading…</div></div>
+<p><a href="/dashboard">← Back to dashboard</a> · <a href="/">Landing</a></p></div>
+<script>
+let cat=null, prod=null, offer=null, qty=1, custId='cust_demo1', cust=null;
+async function api(p,opt={}){const r=await fetch(p,{method:opt?.method||'GET',headers:{'Content-Type':'application/json'},body:opt?.body?JSON.stringify(opt.body):undefined});return r.json();}
+function scr(h){document.getElementById('screen').innerHTML=h;}
+async function refreshCust(){cust=await api('/api/store/customer/'+custId);}
+async function home(){
+  await refreshCust();
+  const c=await api('/api/store/catalog');
+  scr(`<p>${c.store.welcomeText}</p><p class="muted small">Balance: ${cust.balance} USDT</p>
+  <p><button class="small" onclick="showCats()">🛍️ Products</button> <button class="small ghost" onclick="profile()">👤 Profile</button></p>
+  <p><button class="small ghost" onclick="wallet()">👛 Wallet</button> <button class="small ghost" onclick="help()">❓ Help</button></p>`);
+}
+async function showCats(){
+  const c=await api('/api/store/catalog');
+  scr(`<p><b>Choose a category:</b></p>${c.categories.map(x=>`<p><button class="small" style="width:100%" onclick="showProds('${x.id}','${x.name}')">${x.emoji} ${x.name}</button></p>`).join('')}<p><button class="ghost small" onclick="home()">⬅ Back</button></p>`);
+}
+async function showProds(catId,name){
+  const c=await api('/api/store/catalog');
+  const list=c.products.filter(p=>p.categoryId===catId);
+  scr(`<p><b>${name}</b></p>${list.length?list.map(p=>`<p><button class="small" style="width:100%" onclick="showProd('${p.id}')">${p.emoji} ${p.name} — from ${p.offers[0]?.price||'?'} USDT</button></p>`).join(''):'<p class="muted">No live products here yet.</p>'}<p><button class="ghost small" onclick="showCats()">⬅ Back</button></p>`);
+}
+async function showProd(id){
+  const c=await api('/api/store/catalog'); prod=c.products.find(p=>p.id===id);
+  scr(`<p><b>${prod.emoji} ${prod.name}</b></p><p class="muted small">${prod.story||prod.description}</p><p>Stock: ${prod.stock} units</p>${prod.offers.map(o=>`<p><button class="small" style="width:100%" onclick="chooseOffer('${o.id}')">${o.label} — ${o.price} USDT</button></p>`).join('')}<p><button class="ghost small" onclick="showCats()">⬅ Back</button></p>`);
+}
+function chooseOffer(oid){offer=prod.offers.find(o=>o.id===oid);scr(`<p>Choose quantity:</p><p><button class="small" onclick="setQty(1)">1</button> <button class="small" onclick="setQty(2)">2</button> <button class="small" onclick="setQty(3)">3</button></p><p><input id="cq" type="number" placeholder="Custom amount"><button class="small ghost" onclick="setQty(+document.getElementById('cq').value||1)">Use custom</button></p>`);}
+function setQty(q){qty=Math.max(1,Math.min(20,q));const total=(offer.price*qty).toFixed(2);scr(`<p><b>Review order:</b> ${prod.name} ${offer.label}</p><p>Unit price: ${offer.price} USDT<br>Quantity: ${qty}<br>Total: ${total} USDT<br>Your balance: ${cust.balance} USDT</p><p><button onclick="confirmOrder()">✅ Confirm</button> <button class="ghost" onclick="home()">❌ Cancel</button></p>`);}
+async function confirmOrder(){
+  const r=await fetch('/api/store/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerId:custId,productId:prod.id,offerId:offer.id,qty})});
+  const j=await r.json();
+  if(!r.ok){scr(`<p>❌ ${j.error}</p><p><button onclick="wallet()">Top up wallet</button> <button class="ghost" onclick="home()">Back</button></p>`);return;}
+  scr(`<p>✅ Order ${j.id} placed — ${j.total} USDT.</p><p>Status: ${j.status}</p>${j.deliveredUnit?`<p><b>Delivered:</b><br>${j.deliveredUnit}</p>`:''}<p><button onclick="home()">Back to store</button></p>`);
+}
+async function profile(){
+  await refreshCust();
+  scr(`<p><b>Your profile</b></p><p>Name: ${cust.name}<br>Balance: ${cust.balance} USDT<br>Language: ${cust.language.toUpperCase()}</p>
+  <p><button class="small" onclick="myOrders()">📦 My orders</button> <button class="small ghost" onclick="myDeposits()">💳 My deposits</button></p>
+  <p><button class="small ghost" onclick="home()">⬅ Back</button></p>`);
+}
+function myOrders(){scr(`<p><b>My orders</b></p>${cust.orders.map(o=>`<p class="small">${o.id} — ${o.total} USDT — ${o.status}</p>`).join('')||'<p class="muted">No orders yet.</p>'}<p><button class="ghost small" onclick="profile()">⬅ Back</button></p>`);}
+function myDeposits(){scr(`<p><b>My deposits</b></p>${cust.transactions.filter(t=>t.type==='deposit').map(t=>`<p class="small">${t.id} — ${t.amount} USDT — ${t.method} — ${t.status}</p>`).join('')||'<p class="muted">No deposits yet.</p>'}<p><button class="ghost small" onclick="profile()">⬅ Back</button></p>`);}
+async function wallet(){
+  await refreshCust();
+  scr(`<p><b>Wallet: ${cust.balance} USDT</b></p><p><button class="small" onclick="redeem()">🎟️ Redeem deposit code</button></p><p class="muted small">Try code PIXEL-10 for 10 USDT. Top-up via Binance Pay / crypto creates a Pending deposit for the merchant to approve in Transactions.</p><p><button class="ghost small" onclick="home()">⬅ Back</button></p>`);
+}
+function redeem(){scr(`<p>Send your deposit code:</p><input id="rc" placeholder="PIXEL-10"><button onclick="doRedeem()">Redeem</button><p><button class="ghost small" onclick="wallet()">⬅ Back</button></p>`);}
+async function doRedeem(){const r=await fetch('/api/deposit-codes/redeem',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({customerId:custId,code:document.getElementById('rc').value})});const j=await r.json();scr(r.ok?`<p>✅ ${j.amount} USDT credited. Balance: ${j.balance} USDT.</p>`:`<p>❌ ${j.error}</p>`);scr(document.getElementById('screen').innerHTML+`<p><button onclick="home()">Back to store</button></p>`);}
+function help(){scr(`<p>Need help? Message support and we will reply shortly.</p><p class="muted small">All sales are final for delivered digital codes.</p><p><button class="ghost small" onclick="home()">⬅ Back</button></p>`);}
+home();
+</script></body></html>
