@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merchant sign in — PixelShop</title><link rel="stylesheet" href="/styles.css"></head><body>
+<div class="wrap" style="max-width:460px;padding-top:60px">
+<div class="card"><h2>⬢ PixelShop</h2><p class="muted small">MERCHANT ACCESS · SIGN IN</p><h3>Merchant sign in</h3><p class="muted">Use your phone and the password you set.</p>
+<div id="step1">
+<label>Country / region</label><select id="cc"><option value="+234">Nigeria +234</option><option value="+880">Bangladesh +880</option><option value="+1">United States +1</option><option value="+44">United Kingdom +44</option><option value="+91">India +91</option><option value="+966">Saudi Arabia +966</option><option value="+971">UAE +971</option><option value="+20">Egypt +20</option></select>
+<label>Mobile number *</label><input id="phone" placeholder="811228700">
+<label>Password *</label><input id="pass" type="password" placeholder="Enter your password">
+<button onclick="login()" style="width:100%">Continue</button>
+<p class="small"><a href="#" onclick="forgot(event)">Forgot password?</a> · <a href="/">Back to site</a></p>
+<p class="small muted">New here? <a href="#" onclick="register(event)">Create a merchant account</a> (register with phone + password — the original creates accounts in-bot; this replica allows web registration for testing).</p>
+<div id="msg"></div></div>
+<div id="step2" style="display:none"><h3>Verification code</h3><p class="muted">A 6-digit code was sent to your Telegram bot. Enter it below.</p><div id="testcode" class="notice" style="display:none"></div><input id="code" placeholder="000000" maxlength="6"><button onclick="verify()" style="width:100%">Verify &amp; continue</button><div id="msg2"></div></div>
+<div id="stepForgot" style="display:none"><h3>Reset password</h3><p class="muted">Enter the mobile number linked to your account. A code arrives in your bot.</p><input id="fphone" placeholder="+234..."><input id="fcode" placeholder="Code"><input id="fpass" type="password" placeholder="New password"><button onclick="resetPw()" style="width:100%">Reset password</button><div id="msg3"></div><p><a href="#" onclick="location.reload()">Back to sign in</a></p></div>
+</div></div>
+<script>
+let phone='';
+function fullPhone(){let v=document.getElementById('phone').value.trim(); return v.startsWith('+')?v:document.getElementById('cc').value+v.replace(/^0+/,'');}
+async function api(p,b){const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return {s:r.status,j:await r.json()};}
+async function register(e){e.preventDefault();phone=fullPhone();const {s,j}=await api('/api/auth/register',{phone,password:document.getElementById('pass').value});document.getElementById('msg').textContent=s===200?j.message:j.error;}
+async function login(){phone=fullPhone();const {s,j}=await api('/api/auth/login',{phone,password:document.getElementById('pass').value});if(s!==200){document.getElementById('msg').textContent=j.error;return;}document.getElementById('step1').style.display='none';document.getElementById('step2').style.display='block';if(j.testCode){const t=document.getElementById('testcode');t.style.display='block';t.innerHTML='<b>Test notice (no bot connected):</b> your code is <b>'+j.testCode+'</b>. In production this code is sent via Telegram only.';}}
+async function verify(){const {s,j}=await api('/api/auth/verify',{phone,code:document.getElementById('code').value});if(s!==200){document.getElementById('msg2').textContent=j.error;return;}location.href='/dashboard';}
+async function forgot(e){e.preventDefault();document.getElementById('step1').style.display='none';document.getElementById('stepForgot').style.display='block';const {s,j}=await api('/api/auth/forgot',{phone:fullPhone()});if(j.testCode)document.getElementById('msg3').textContent='Test code (no bot): '+j.testCode;}
+async function resetPw(){const {s,j}=await api('/api/auth/reset',{phone:document.getElementById('fphone').value,code:document.getElementById('fcode').value,password:document.getElementById('fpass').value});document.getElementById('msg3').textContent=s===200?'Password reset — sign in now.':j.error;}
+</script></body></html>
