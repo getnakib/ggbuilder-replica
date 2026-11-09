@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard — PixelShop</title><link rel="stylesheet" href="/styles.css"></head><body>
+<div class="layout"><aside class="sidebar"><h3>⬢ <span id="storeName">PixelShop</span></h3><div class="small muted" id="storeStatus">DRAFT</div>
+<div class="grp">OVERVIEW</div><a data-p="home">🏠 Home</a><a data-p="customers">👥 Customers</a><a data-p="catalog">🛍️ Catalog</a><a data-p="inventory">📦 Inventory</a><a data-p="orders">🧾 Orders</a><a data-p="analytics">📈 Analytics</a>
+<div class="grp">CHANNEL</div><a data-p="settings">⚙️ Settings</a><a data-p="languages">🌐 Languages</a><a data-p="bot-design">🎨 Bot Design</a><a data-p="broadcast">📣 Broadcast</a>
+<div class="grp">MONEY</div><a data-p="payments">💳 Payment methods</a><a data-p="transactions">💱 Transactions</a><a data-p="deposit-codes">🎟️ Deposit codes</a>
+<div class="grp">LEARN</div><a data-p="guide">📖 Store guide</a><a data-p="notifications">🔔 Notifications</a>
+<p style="margin-top:20px"><a href="/store-preview" target="_blank">🛒 Store preview</a><br><a href="/" target="_blank">🌍 Landing page</a><br><a href="#" onclick="logout()">🚪 Log out</a></p>
+</aside><main class="main"><div class="topbar"><h2 id="pageTitle">Home</h2><div><select id="langSel" style="width:auto;display:inline-block"><option value="en">English</option><option value="ar">العربية</option><option value="bn">বাংলা</option><option value="pt-BR">Português (Brasil)</option><option value="zh-CN">简体中文</option><option value="vi">Tiếng Việt</option><option value="hi">हिन्दी</option><option value="ru">Русский</option></select> <span id="botBadge" class="badge">Bot: —</span> <button class="ghost small" onclick="go('notifications')">🔔 <span id="notifCount"></span></button></div></div><div id="app">Loading…</div></main></div>
+<div id="modal"></div>
+<script src="/dashboard.js"></script></body></html>
